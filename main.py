@@ -14,6 +14,11 @@ def randomGrid(N, liveCellDensity):
     """returns a grid of NxN random values"""
     return np.random.choice(vals, N * N, p=[liveCellDensity, 1 - liveCellDensity]).reshape(N, N)
 
+def addSquare(i, j, grid):
+    glider = np.array([[255, 255],
+                       [255, 255]])
+    grid[i:i + 1, j:j + 1] = glider
+
 
 def addGlider(i, j, grid):
     """adds a glider with top left cell at (i, j)"""
@@ -22,13 +27,45 @@ def addGlider(i, j, grid):
                        [0, 255, 255]])
     grid[i:i + 3, j:j + 3] = glider
 
-def addLightweightSpaceship(i, j, grid):
+
+def addLightweightSpaceship(i, j, grid, orientation="left"):
     """left orientation"""
-    lwss = np.array([[0, 255, 0, 0, 255],
+    light_ship = np.array([[0, 255, 0, 0, 255],
                      [255, 0, 0, 0, 0],
                      [255, 0, 0, 0, 255],
                      [255, 255, 255, 255, 0]])
-    grid[i:i + 4, j:j + 5] = lwss
+
+    if orientation.lower() == "right":
+        light_ship = np.fliplr(light_ship)
+
+    grid[i:i + 4, j:j + 5] = light_ship
+
+
+def addMiddleSpaceship(i, j, grid, orientation="left"):
+    middle_ship = np.array([[0, 0, 255, 0, 0, 0],
+                            [255, 0, 0, 0, 255, 0],
+                            [0, 0, 0, 0, 0, 255],
+                            [255, 0, 0, 0, 0, 255],
+                            [0, 255, 255, 255, 255, 255]])
+
+    if orientation.lower() == "right":
+        middle_ship = np.fliplr(middle_ship)
+
+    grid[i:i + 5, j:j + 6] = middle_ship
+
+
+def addLargeSpaceship(i, j, grid, orientation="left"):
+    large_ship = np.array([[0, 255, 255, 255, 255, 255, 255],
+                           [255, 0, 0, 0, 0, 0, 255],
+                           [0, 0, 0, 0, 0, 0, 255],
+                           [255, 0, 0, 0, 0, 255, 0],
+                           [0, 0, 255, 255, 0, 0, 0]])
+
+    if orientation.lower() == "right":
+        large_ship = np.fliplr(large_ship)
+
+    grid[i:i + 5, j:j + 7] = large_ship
+
 
 def addGosperGliderGun(i, j, grid):
     """adds a Gosper Glider Gun with top left
@@ -101,8 +138,11 @@ def main():
     parser.add_argument('--density', dest='density', required=False)
     parser.add_argument('--mov-file', dest='movfile', required=False)
     parser.add_argument('--interval', dest='interval', required=False)
+    parser.add_argument('--orientation', dest='orientation', required=False, default="left")
     parser.add_argument('--glider', action='store_true', required=False)
     parser.add_argument('--lightSpaceship', action='store_true', required=False)
+    parser.add_argument('--middleSpaceship', action='store_true', required=False)
+    parser.add_argument('--largeSpaceship', action='store_true', required=False)
     parser.add_argument('--gosper', action='store_true', required=False)
     args = parser.parse_args()
 
@@ -122,7 +162,6 @@ def main():
     density = 0.2
     if args.density and 0 < float(args.density) < 1:
         density = float(args.density)
-    # check if "glider" demo flag is specified
     if args.glider:
         grid = np.zeros(N * N).reshape(N, N)
         addGlider(1, 1, grid)
@@ -131,9 +170,14 @@ def main():
         addGosperGliderGun(10, 10, grid)
     elif args.lightSpaceship:
         grid = np.zeros(N * N).reshape(N, N)
-        addLightweightSpaceship(1, 1, grid)
-
-    else:  # populate grid with random on/off -
+        addLightweightSpaceship(1, 1, grid, args.orientation)
+    elif args.middleSpaceship:
+        grid = np.zeros(N * N).reshape(N, N)
+        addMiddleSpaceship(1, 1, grid, args.orientation)
+    elif args.largeSpaceship:
+        grid = np.zeros(N * N).reshape(N, N)
+        addLargeSpaceship(2, 2, grid, args.orientation)
+    else:
         grid = randomGrid(N, density)
 
     # set up animation
