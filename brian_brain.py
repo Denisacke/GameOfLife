@@ -1,5 +1,6 @@
 # Python code to implement Conway's Game Of Life
 import argparse
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
@@ -16,8 +17,6 @@ def randomGrid(N, firingCellDensity):
     return np.random.choice(vals, N * N, p=[firingCellDensity, 0, 1 - firingCellDensity]).reshape(N, N)
 
 def update(frameNum, img, grid, N):
-    # copy grid since we require 8 neighbors
-    # for calculation and we go line by line
     newGrid = grid.copy()
     for i in range(N):
         for j in range(N):
@@ -27,7 +26,8 @@ def update(frameNum, img, grid, N):
             elif grid[i, j] == REFRACTORY:
                 newGrid[i, j] = DEAD
             elif grid[i, j] == DEAD:
-                firing_neighbors = np.sum(grid[max(0, i - 1):min(N, i + 1), max(0, j - 1):min(N, j + 1)] == FIRING)
+                # Ensure that we don't get out of bounds index
+                firing_neighbors = np.sum(grid[max(0, i - 1):min(N, i + 2), max(0, j - 1):min(N, j + 2)] == FIRING)
 
                 if firing_neighbors == 2:
                     newGrid[i, j] = FIRING
@@ -68,8 +68,7 @@ def main():
     density = 0.7
     if args.density and 0 < float(args.density) < 1:
         density = float(args.density)
-    else:
-        grid = randomGrid(N, density)
+    grid = randomGrid(N, density)
 
     # set up animation
     fig, ax = plt.subplots()
@@ -84,8 +83,6 @@ def main():
                                   interval=updateInterval,
                                   save_count=50)
 
-    # # of frames?
-    # set output file
     if args.movfile:
         ani.save(args.movfile, fps=30, extra_args=['-vcodec', 'libx264'])
 
