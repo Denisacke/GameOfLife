@@ -112,7 +112,7 @@ def update(frameNum, img, grid, N):
                          grid[(i - 1) % N, (j - 1) % N] + grid[(i - 1) % N, (j + 1) % N] +
                          grid[(i + 1) % N, (j - 1) % N] + grid[(i + 1) % N, (j + 1) % N]) / 255)
 
-            # apply Conway's rules
+            # apply Conway's rules (B3/S23)
             if grid[i, j] == ON:
                 if (total < 2) or (total > 3):
                     newGrid[i, j] = OFF
@@ -120,6 +120,29 @@ def update(frameNum, img, grid, N):
                 if total == 3:
                     newGrid[i, j] = ON
 
+            # B6/S16 configuration
+            # if grid[i, j] == ON:
+            #     if 1 < total < 6:
+            #         newGrid[i, j] = OFF
+            # else:
+            #     if total == 6:
+            #         newGrid[i, j] = ON
+
+            # B2/S12
+            # if grid[i, j] == ON:
+            #     if (total < 1) or (total > 2):
+            #         newGrid[i, j] = OFF
+            # else:
+            #     if total == 2:
+            #         newGrid[i, j] = ON
+
+            # B4/S34 configuration (still life)
+            # if grid[i, j] == ON:
+            #     if (total < 3) or (total > 4):
+            #         newGrid[i, j] = OFF
+            # else:
+            #     if total == 4:
+            #         newGrid[i, j] = ON
     # update data
     img.set_data(newGrid)
     grid[:] = newGrid[:]
