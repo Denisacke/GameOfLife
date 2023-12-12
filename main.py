@@ -3,12 +3,21 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import re
 
 # setting up the values for the grid
 ON = 255
 OFF = 0
 vals = [ON, OFF]
 
+def parse_rules(rule_string):
+    match = re.match(r'B(\d+)/S(\d+)', rule_string)
+    if match:
+        bRule = int(match.group(1))
+        sRule = [int(digit) for digit in match.group(2)]
+        return bRule, sRule
+    else:
+        raise ValueError("Invalid rule format")
 
 def randomGrid(N, liveCellDensity):
     """returns a grid of NxN random values"""
@@ -97,7 +106,7 @@ def addGosperGliderGun(i, j, grid):
     grid[i:i + 11, j:j + 38] = gun
 
 
-def update(frameNum, img, grid, N):
+def update(frameNum, img, grid, N, bRule, sRule):
     # copy grid since we require 8 neighbors
     # for calculation and we go line by line
     newGrid = grid.copy()
@@ -114,35 +123,12 @@ def update(frameNum, img, grid, N):
 
             # apply Conway's rules (B3/S23)
             if grid[i, j] == ON:
-                if (total < 2) or (total > 3):
+                if (total < sRule[0]) or (total > sRule[1]):
                     newGrid[i, j] = OFF
             else:
-                if total == 3:
+                if total == bRule:
                     newGrid[i, j] = ON
 
-            # B6/S16 configuration
-            # if grid[i, j] == ON:
-            #     if 1 < total < 6:
-            #         newGrid[i, j] = OFF
-            # else:
-            #     if total == 6:
-            #         newGrid[i, j] = ON
-
-            # B2/S12
-            # if grid[i, j] == ON:
-            #     if (total < 1) or (total > 2):
-            #         newGrid[i, j] = OFF
-            # else:
-            #     if total == 2:
-            #         newGrid[i, j] = ON
-
-            # B4/S34 configuration (still life)
-            # if grid[i, j] == ON:
-            #     if (total < 3) or (total > 4):
-            #         newGrid[i, j] = OFF
-            # else:
-            #     if total == 4:
-            #         newGrid[i, j] = ON
     # update data
     img.set_data(newGrid)
     grid[:] = newGrid[:]
@@ -162,6 +148,7 @@ def main():
     parser.add_argument('--mov-file', dest='movfile', required=False)
     parser.add_argument('--interval', dest='interval', required=False)
     parser.add_argument('--orientation', dest='orientation', required=False, default="left")
+    parser.add_argument('--configuration', dest='configuration', required=False, default="B3/S23")
     parser.add_argument('--glider', action='store_true', required=False)
     parser.add_argument('--lightSpaceship', action='store_true', required=False)
     parser.add_argument('--middleSpaceship', action='store_true', required=False)
@@ -185,6 +172,9 @@ def main():
     density = 0.2
     if args.density and 0 < float(args.density) < 1:
         density = float(args.density)
+
+    bRule, sRule = parse_rules(args.configuration)
+
     if args.glider:
         grid = np.zeros(N * N).reshape(N, N)
         addGlider(1, 1, grid)
@@ -206,7 +196,7 @@ def main():
     # set up animation
     fig, ax = plt.subplots()
     img = ax.imshow(grid, interpolation='nearest')
-    ani = animation.FuncAnimation(fig, update, fargs=(img, grid, N,),
+    ani = animation.FuncAnimation(fig, update, fargs=(img, grid, N, bRule, sRule),
                                   frames=10,
                                   interval=updateInterval,
                                   save_count=50)
