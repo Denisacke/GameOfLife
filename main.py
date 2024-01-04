@@ -10,6 +10,7 @@ ON = 255
 OFF = 0
 vals = [ON, OFF]
 
+
 def parse_rules(rule_string):
     match = re.match(r'B(\d+)/S(\d+)', rule_string)
     if match:
@@ -19,9 +20,11 @@ def parse_rules(rule_string):
     else:
         raise ValueError("Invalid rule format")
 
+
 def randomGrid(N, liveCellDensity):
     """returns a grid of NxN random values"""
     return np.random.choice(vals, N * N, p=[liveCellDensity, 1 - liveCellDensity]).reshape(N, N)
+
 
 def addSquare(i, j, grid):
     glider = np.array([[255, 255],
@@ -40,9 +43,9 @@ def addGlider(i, j, grid):
 def addLightweightSpaceship(i, j, grid, orientation="left"):
     """left orientation"""
     light_ship = np.array([[0, 255, 0, 0, 255],
-                     [255, 0, 0, 0, 0],
-                     [255, 0, 0, 0, 255],
-                     [255, 255, 255, 255, 0]])
+                           [255, 0, 0, 0, 0],
+                           [255, 0, 0, 0, 255],
+                           [255, 255, 255, 255, 0]])
 
     if orientation.lower() == "right":
         light_ship = np.fliplr(light_ship)
@@ -106,16 +109,22 @@ def addGosperGliderGun(i, j, grid):
     grid[i:i + 11, j:j + 38] = gun
 
 
+def addEaterPattern(i, j, grid, orientation="left"):
+    eater_pattern = np.array([[0, 0, 255, 255],
+                              [0, 255, 0, 255],
+                              [0, 255, 0, 0],
+                              [255, 255, 0, 0]])
+
+    if orientation.lower() == "right":
+        eater_pattern = np.fliplr(eater_pattern)
+
+    grid[i:i + 4, j:j + 4] = eater_pattern
+
+
 def update(frameNum, img, grid, N, bRule, sRule):
-    # copy grid since we require 8 neighbors
-    # for calculation and we go line by line
     newGrid = grid.copy()
     for i in range(N):
         for j in range(N):
-
-            # compute 8-neighbor sum
-            # using toroidal boundary conditions - x and y wrap around
-            # so that the simulation takes place on a toroidal surface.
             total = int((grid[i, (j - 1) % N] + grid[i, (j + 1) % N] +
                          grid[(i - 1) % N, j] + grid[(i + 1) % N, j] +
                          grid[(i - 1) % N, (j - 1) % N] + grid[(i - 1) % N, (j + 1) % N] +
@@ -129,17 +138,19 @@ def update(frameNum, img, grid, N, bRule, sRule):
                 if total == bRule:
                     newGrid[i, j] = ON
 
+            # apply Seeds' rules (B2/S)
+            # if total == 2 and grid[i, j] == OFF:
+            #     newGrid[i, j] = ON
+            # else:
+            #     newGrid[i, j] = OFF
+
     # update data
     img.set_data(newGrid)
     grid[:] = newGrid[:]
-    return img,
+    return img
 
 
-# main() function
 def main():
-    # Command line args are in sys.argv[1], sys.argv[2] ..
-    # sys.argv[0] is the script name itself and can be ignored
-    # parse arguments
     parser = argparse.ArgumentParser(description="Runs Conway's Game of Life simulation.")
 
     # add arguments
@@ -153,6 +164,7 @@ def main():
     parser.add_argument('--lightSpaceship', action='store_true', required=False)
     parser.add_argument('--middleSpaceship', action='store_true', required=False)
     parser.add_argument('--largeSpaceship', action='store_true', required=False)
+    parser.add_argument('--eater', action='store_true', required=False)
     parser.add_argument('--gosper', action='store_true', required=False)
     args = parser.parse_args()
 
@@ -174,22 +186,30 @@ def main():
         density = float(args.density)
 
     bRule, sRule = parse_rules(args.configuration)
+    grid = np.zeros(N * N).reshape(N, N)
 
     if args.glider:
-        grid = np.zeros(N * N).reshape(N, N)
         addGlider(1, 1, grid)
+        if args.eater:
+            addEaterPattern(20, 20, grid, args.orientation)
     elif args.gosper:
-        grid = np.zeros(N * N).reshape(N, N)
         addGosperGliderGun(10, 10, grid)
+        if args.eater:
+            addEaterPattern(30, 44, grid, args.orientation)
     elif args.lightSpaceship:
-        grid = np.zeros(N * N).reshape(N, N)
         addLightweightSpaceship(1, 1, grid, args.orientation)
+        if args.eater:
+            addEaterPattern(1, 44, grid, args.orientation)
     elif args.middleSpaceship:
-        grid = np.zeros(N * N).reshape(N, N)
         addMiddleSpaceship(1, 1, grid, args.orientation)
+        if args.eater:
+            addEaterPattern(1, 44, grid, args.orientation)
     elif args.largeSpaceship:
-        grid = np.zeros(N * N).reshape(N, N)
         addLargeSpaceship(2, 2, grid, args.orientation)
+        if args.eater:
+            addEaterPattern(1, 44, grid, args.orientation)
+    elif args.eater:
+        addEaterPattern(1, 1, grid, args.orientation)
     else:
         grid = randomGrid(N, density)
 

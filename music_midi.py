@@ -47,13 +47,6 @@ while running:
                 if neighbors_sum == 3:
                     new_grid[i, j] = 1
 
-    # Play notes based on the state of the grid
-    for i in range(grid_size[0]):
-        for j in range(grid_size[1]):
-            if grid[i, j] == 1:
-                player.note_on(notes[i % len(notes)], velocity=64)
-                time.sleep(0.1)
-
     # Update the grid
     grid = np.copy(new_grid)
 
@@ -65,6 +58,13 @@ while running:
             pygame.draw.rect(screen, color, (j * cell_size, i * cell_size, cell_size, cell_size))
 
     pygame.display.flip()
+
+    # Play notes based on the state of the grid
+    for i in range(grid_size[0]):
+        for j in range(grid_size[1]):
+            if grid[i, j] == 1:
+                player.note_on(notes[j % len(notes)], velocity=64)
+                time.sleep(0.1)
 
 # Clean up
 player.close()

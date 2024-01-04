@@ -12,9 +12,19 @@ DEAD = 2
 vals = [FIRING, REFRACTORY, DEAD]
 colors = ['white', 'red', 'black']
 
+
 def randomGrid(N, firingCellDensity):
     """returns a grid of NxN random values"""
     return np.random.choice(vals, N * N, p=[firingCellDensity, 0, 1 - firingCellDensity]).reshape(N, N)
+
+
+def addOscillatorBlock(i, j, grid):
+    block = np.array([[DEAD, REFRACTORY, DEAD, DEAD],
+                      [DEAD, FIRING, FIRING, REFRACTORY],
+                      [REFRACTORY, FIRING, FIRING, DEAD],
+                      [DEAD, DEAD, REFRACTORY, DEAD]])
+    grid[i:i + 4, j:j + 4] = block
+
 
 def update(frameNum, img, grid, N):
     newGrid = grid.copy()
@@ -49,6 +59,7 @@ def main():
     parser.add_argument('--grid-size', dest='N', required=False)
     parser.add_argument('--density', dest='density', required=False)
     parser.add_argument('--mov-file', dest='movfile', required=False)
+    parser.add_argument('--oscillator', action='store_true', required=False)
     parser.add_argument('--interval', dest='interval', required=False)
     args = parser.parse_args()
 
@@ -68,7 +79,12 @@ def main():
     density = 0.7
     if args.density and 0 < float(args.density) < 1:
         density = float(args.density)
-    grid = randomGrid(N, density)
+
+    if args.oscillator:
+        grid = np.full((N, N), fill_value=DEAD)
+        addOscillatorBlock(4, 4, grid)
+    else:
+        grid = randomGrid(N, density)
 
     # set up animation
     fig, ax = plt.subplots()
